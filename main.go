@@ -40,6 +40,7 @@ func main() {
 	// handlers initialization
 	userHandler := api.NewUserHandler(db.NewMongoUserStore(client))
 	// routes
+	apiv1.Post("/user", userHandler.HandlePostUser)
 	apiv1.Get("/user", userHandler.HandleGetUsers)
 	apiv1.Get("/user/:id", userHandler.HandleGetUser)
 	// initialization
