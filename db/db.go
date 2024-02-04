@@ -1,3 +1,10 @@
 package db
 
-const DBNAME = "hotel-reservation"
+import "os"
+
+const (
+	DBNAME     = "hotel-reservation"
+	TestDBNAME = "hotel-reservation-test"
+)
+
+var DBURI = os.Getenv("MONGO_URI")

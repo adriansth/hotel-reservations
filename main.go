@@ -4,20 +4,12 @@ import (
 	"context"
 	"flag"
 	"log"
-	"os"
 
 	"github.com/adriansth/go-hotel-reservations/api"
 	"github.com/adriansth/go-hotel-reservations/db"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-var dburi = os.Getenv("MONGO_URI")
-
-const (
-	dbname   = "hotel-reservation"
-	userColl = "users"
 )
 
 var config = fiber.Config{
@@ -29,7 +21,7 @@ var config = fiber.Config{
 func main() {
 	// database
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(dburi).SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI(db.DBURI).SetServerAPIOptions(serverAPI)
 	client, err := mongo.Connect(context.TODO(), opts)
 	if err != nil {
 		log.Fatal(err)
@@ -37,16 +29,23 @@ func main() {
 	// server
 	listenAddr := flag.String("listenAddr", ":8080", "The listen address of the API server.")
 	flag.Parse()
-	app := fiber.New(config)
-	apiv1 := app.Group("/api/v1")
 	// handlers initialization
-	userHandler := api.NewUserHandler(db.NewMongoUserStore(client, dbname))
-	// routes
+	var (
+		app          = fiber.New(config)
+		apiv1        = app.Group("/api/v1")
+		userHandler  = api.NewUserHandler(db.NewMongoUserStore(client, db.DBNAME))
+		hotelStore   = db.NewMongoHotelStore(client)
+		roomStore    = db.NewMongoRoomStore(client, hotelStore)
+		hotelHandler = api.NewHotelHandler(hotelStore, roomStore)
+	)
+	// user handlers
 	apiv1.Post("/user", userHandler.HandlePostUser)
 	apiv1.Put("/user/:id", userHandler.HandlePutUser)
 	apiv1.Delete("/user/:id", userHandler.HandleDeleteUser)
 	apiv1.Get("/user", userHandler.HandleGetUsers)
 	apiv1.Get("/user/:id", userHandler.HandleGetUser)
+	// hotel handlers
+	apiv1.Get("/hotel", hotelHandler.HandleGetHotels)
 	// initialization
 	app.Listen(*listenAddr)
 }

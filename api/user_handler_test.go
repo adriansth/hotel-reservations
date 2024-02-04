@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/adriansth/go-hotel-reservations/db"
@@ -14,12 +13,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-var dburi = os.Getenv("MONGO_URI")
-
-const (
-	dbname = "hotel-reservation"
 )
 
 type testdb struct {
@@ -34,13 +27,13 @@ func (tdb *testdb) teardown(t *testing.T) {
 
 func setup(t *testing.T) *testdb {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(dburi).SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI(db.DBURI).SetServerAPIOptions(serverAPI)
 	client, err := mongo.Connect(context.TODO(), opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return &testdb{
-		UserStore: db.NewMongoUserStore(client, dbname),
+		UserStore: db.NewMongoUserStore(client, db.DBNAME),
 	}
 }
 
